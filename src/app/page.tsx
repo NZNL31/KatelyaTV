@@ -32,7 +32,7 @@ const MainKatelyaLogo = () => {
       <div className='logo-background-glow'></div>
 
       {/* 主 Logo */}
-      <div className='main-katelya-logo'>KatelyaTV</div>
+      <div className='main-katelya-logo'>ABTV</div>
 
       {/* 副标题 */}
       <div className='mt-3 text-center'>
