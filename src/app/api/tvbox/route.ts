@@ -28,27 +28,27 @@ interface TVBoxConfig {
     url: string;
     epg?: string;
     logo?: string;
-  }>; // 直播源
-  sites: TVBoxSource[]; // 影视源
+  }>;
+  sites: TVBoxSource[];
   parses?: Array<{
     name: string;
     type: number;
     url: string;
     ext?: Record<string, unknown>;
     header?: Record<string, string>;
-  }>; // 解析源
-  flags?: string[]; // 播放标识
-  ijk?: Record<string, unknown>; // IJK播放器配置
-  ads?: string[]; // 广告过滤规则
+  }>;
+  flags?: string[];
+  ijk?: Record<string, unknown>;
+  ads?: string[];
 }
 
-// 本地影视源示例
+// ====== 本地影视源 ======
 const localSources: TVBoxSource[] = [
   {
     key: 'local-movie',
     name: '本地影视源',
     type: 1,
-    api: '', // 不请求远程URL
+    api: '', // 绝对不访问远程
     searchable: 1,
     quickSearch: 1,
     filterable: 1,
@@ -65,9 +65,9 @@ export async function GET(request: NextRequest) {
     const protocol = request.headers.get('x-forwarded-proto') || 'http';
     const baseUrl = `${protocol}://${host}`;
 
-    // 构造 TVBox 配置
+    // 构造完整 TVBox 配置
     const tvboxConfig: TVBoxConfig = {
-      spider: '', // 本地不使用爬虫jar
+      spider: '', // 本地不使用爬虫
       wallpaper: `${baseUrl}/screenshot1.png`,
       sites: localSources,
       parses: [
@@ -79,53 +79,41 @@ export async function GET(request: NextRequest) {
           url: "",
           ext: {
             flag: [
-              "qiyi", "qq", "letv", "sohu", "youku", "mgtv",
-              "bilibili", "wasu", "xigua", "1905"
+              "qiyi","qq","letv","sohu","youku","mgtv",
+              "bilibili","wasu","xigua","1905"
             ]
           }
         }
       ],
       flags: [
-        "本地", "youku", "qq", "iqiyi", "qiyi", "letv",
-        "sohu", "bilibili", "le", "duoduozy", "renrenmi",
-        "xigua", "优酷", "腾讯", "爱奇艺", "奇艺", "乐视",
-        "搜狐", "土豆", "PPTV", "芒果", "华数", "哔哩", "1905"
+        "本地","youku","qq","iqiyi","qiyi","letv",
+        "sohu","bilibili","le","duoduozy","renrenmi",
+        "xigua","优酷","腾讯","爱奇艺","奇艺","乐视",
+        "搜狐","土豆","PPTV","芒果","华数","哔哩","1905"
       ],
       lives: [
         { name: "本地直播", type: 0, url: "", epg: "", logo: "" }
       ],
-      ads: [] // 移除所有广告域名
+      ads: [] // 完全移除广告
     };
 
-    if (format === 'txt') {
-      const configStr = JSON.stringify(tvboxConfig, null, 2);
-      const base64Config = Buffer.from(configStr).toString('base64');
-      return new NextResponse(base64Config, {
-        headers: {
-          'Content-Type': 'text/plain; charset=utf-8',
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'GET',
-          'Access-Control-Allow-Headers': 'Content-Type',
-          'Cache-Control': 'public, max-age=3600'
-        }
-      });
-    } else {
-      return NextResponse.json(tvboxConfig, {
-        headers: {
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'GET',
-          'Access-Control-Allow-Headers': 'Content-Type',
-          'Cache-Control': 'public, max-age=3600'
-        }
-      });
-    }
+    // 不管 json 还是 txt，都返回 Base64，前端安全使用
+    const configStr = JSON.stringify(tvboxConfig, null, 2);
+    const base64Config = Buffer.from(configStr).toString('base64');
+
+    return new NextResponse(base64Config, {
+      headers: {
+        'Content-Type': 'text/plain; charset=utf-8',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Cache-Control': 'public, max-age=3600'
+      }
+    });
 
   } catch (error) {
     return NextResponse.json(
-      {
-        error: 'TVBox本地配置生成失败',
-        details: error instanceof Error ? error.message : String(error)
-      },
+      { error: 'TVBox本地配置生成失败', details: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     );
   }
